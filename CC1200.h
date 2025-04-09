@@ -16,10 +16,11 @@ class CC1200 {
         void testRx();
         byte avail();
         void read(byte* buf);
+        byte reset();
     private:
         SPIClass* _SPI;
         SPISettings _settings;
         void _writeReg(unsigned int reg, byte val);
         byte _readReg(unsigned int reg);
-        void _strobe(byte cmd);
+        byte _strobe(byte cmd);
 };

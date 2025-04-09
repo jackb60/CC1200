@@ -13,6 +13,7 @@ CC1200 cc(&SPI_3, settings);
 
 void setup() {
     // put your setup code here, to run once:
+    delay(1000);
     Serial.begin(115200);
     cc.begin();
     Serial.println("Checking part number (should return 0x20)");

@@ -15,6 +15,7 @@ byte recBuf[3];
 
 void setup() {
     // put your setup code here, to run once:
+    delay(1000);
     Serial.begin(115200);
     cc.begin();
     Serial.println("Checking part number (should return 0x20)");
@@ -28,7 +29,7 @@ void loop() {
     // put your main code here, to run repeatedly:
     if(cc.avail()) {
         Serial.println("PACKET AVAILABLE");
-        recBuf = cc.read();
+        cc.read(recBuf);
         for(byte i = 0; i < 3; i++) {
             Serial.print("BYTE ");
             Serial.print(i + 1);

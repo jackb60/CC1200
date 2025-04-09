@@ -9,6 +9,13 @@ CC1200::CC1200(SPIClass* SPI, SPISettings settings) {
 
 void CC1200::begin() {
     _SPI->begin();
+    delay(1);
+    reset();
+    delay(1);
+}
+
+byte CC1200::reset() {
+    return _strobe(0x30);
 }
 
 void CC1200::_writeReg(unsigned int reg, byte val) {
@@ -31,15 +38,15 @@ byte CC1200::_readReg(unsigned int reg) {
         _SPI->transfer(((byte) reg) | READ);
         ret = _SPI->transfer(0x00);
     } else {
-        _SPI->transfer(0x2F);
-        _SPI->transfer(((byte) reg) | READ);
+        _SPI->transfer(0x2F | READ);
+        _SPI->transfer(((byte) reg));
         ret = _SPI->transfer(0x00);
     }
     _SPI->endTransaction();
     return ret;
 }
 
-void CC1200::_strobe(byte cmd) {
+byte CC1200::_strobe(byte cmd) {
     _SPI->beginTransaction(_settings);
     _SPI->transfer(cmd);
     _SPI->endTransaction();
@@ -112,7 +119,7 @@ bool CC1200::ready() {
 }
 
 byte CC1200::partnum() {
-    return _readReg(0x278F);
+    return _readReg(0x2F8F);
 }
 
 bool CC1200::testTx() {

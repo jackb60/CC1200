@@ -20,8 +20,7 @@ void setup() {
   
 void loop() {
     // put your main code here, to run repeatedly:
-    Serial.println("Checking part number (should return 0x20)");
-    Serial.print("Part number: 0x");
-    Serial.println(cc.partnum(), HEX);
+    Serial.print("Status: ");
+    Serial.println(cc.status());
     delay(1000);
 }

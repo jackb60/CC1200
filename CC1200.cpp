@@ -2,13 +2,16 @@
 #include "SPI.h"
 #include "CC1200.h"
 
-CC1200::CC1200(SPIClass* SPI, SPISettings settings) {
+CC1200::CC1200(SPIClass* SPI, SPISettings settings, int cs) {
     _SPI = SPI;
     _settings = settings;
+    _cs = cs;
 }
 
 void CC1200::begin() {
+    digitalWrite(_cs, 1);
     _SPI->begin();
+    _SPI->beginTransaction(_settings);
     delay(1);
     reset();
     delay(1);
@@ -19,7 +22,7 @@ byte CC1200::reset() {
 }
 
 void CC1200::_writeReg(unsigned int reg, byte val) {
-    _SPI->beginTransaction(_settings);
+    digitalWrite(_cs, 0);
     if(reg < 0x002F) {
         _SPI->transfer((byte) reg);
         _SPI->transfer(val);
@@ -28,12 +31,12 @@ void CC1200::_writeReg(unsigned int reg, byte val) {
         _SPI->transfer((byte) reg);
         _SPI->transfer(val);
     }
-    _SPI->endTransaction();
+    digitalWrite(_cs, 1);
 }
 
 byte CC1200::_readReg(unsigned int reg) {
     byte ret;
-    _SPI->beginTransaction(_settings);
+    digitalWrite(_cs, 0);
     if(reg < 0x002F) {
         _SPI->transfer(((byte) reg) | READ);
         ret = _SPI->transfer(0x00);
@@ -42,14 +45,14 @@ byte CC1200::_readReg(unsigned int reg) {
         _SPI->transfer(((byte) reg));
         ret = _SPI->transfer(0x00);
     }
-    _SPI->endTransaction();
+    digitalWrite(_cs, 1);
     return ret;
 }
 
 byte CC1200::_strobe(byte cmd) {
-    _SPI->beginTransaction(_settings);
-    _SPI->transfer(cmd);
-    _SPI->endTransaction();
+    digitalWrite(_cs, 0);
+    byte ret = _SPI->transfer(cmd);
+    digitalWrite(_cs, 1);
 }
 
 byte CC1200::status() {
@@ -61,14 +64,18 @@ byte CC1200::status() {
     //5 : SETTLING
     //6 : RX FIFO ERROR
     //7 : TX FIFO ERROR
-    _SPI->beginTransaction(_settings);
+    digitalWrite(_cs, 0);
     byte ret = (_SPI->transfer(0x3D) >> 4) & 0x07;
-    _SPI->endTransaction();
+    digitalWrite(_cs, 1);
     return ret;
 }
 
 
 void CC1200::simpleConfig() {
+
+}
+
+void CC1200::narrowConfig() {
     _writeReg(0x000A, 0xD1); //Frequency Deviation Configuration
     _writeReg(0x000B, 0x00); //Modulation Format and Frequency Deviation Configuration
     _writeReg(0x000C, 0x5D); //Digital DC Removal Configuration
@@ -92,7 +99,6 @@ void CC1200::simpleConfig() {
     _writeReg(0x2F05, 0x0C); //General Modem Parameter Configuration Reg. 2
     _writeReg(0x2F0C, 0x5B); //Frequency Configuration [23:16]
     _writeReg(0x2F0D, 0x80); //Frequency Configuration [15:8]
-    _writeReg(0x2F0E, 0xCC); //Frequency Configuration [7:0]
     _writeReg(0x2F10, 0xEE); //Analog to Digital Converter Configuration Reg. 1
     _writeReg(0x2F11, 0x10); //Analog to Digital Converter Configuration Reg. 0
     _writeReg(0x2F12, 0x07); //Frequency Synthesizer Digital Reg. 1
@@ -112,9 +118,9 @@ void CC1200::simpleConfig() {
 }
 
 bool CC1200::ready() {
-    _SPI->beginTransaction(_settings);
+    digitalWrite(_cs, 0);
     bool rdy = !(_SPI->transfer(0x3D) & 0x80);
-    _SPI->endTransaction();
+    digitalWrite(_cs, 1);
     return rdy;
 }
 
@@ -124,10 +130,10 @@ byte CC1200::partnum() {
 
 bool CC1200::testTx() {
     byte data[3] = {0xAA, 0xBB, 0xCC};
-    _SPI->beginTransaction(_settings);
+    digitalWrite(_cs, 0);
     _SPI->transfer(0x3F | BURST); //FIFO ADR
     _SPI->transfer(0xAABBCC, 3); //TEST DATA
-    _SPI->endTransaction();
+    digitalWrite(_cs, 1);
 
     _strobe(0x35); //STX
 
@@ -149,8 +155,8 @@ byte CC1200::avail() {
 }
 
 void CC1200::read(byte* buf) {
-    _SPI->beginTransaction(_settings);
+    digitalWrite(_cs, 0);
     _SPI->transfer(0x3F | READ | BURST); //FIFO ADR
     _SPI->transfer(buf, 3); //TEST DATA
-    _SPI->endTransaction();
+    digitalWrite(_cs, 1);
 }

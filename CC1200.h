@@ -6,7 +6,7 @@
 
 class CC1200 {
     public:
-        CC1200(SPIClass* SPI, SPISettings settings);
+        CC1200(SPIClass* SPI, SPISettings settings, int cs);
         void begin();
         byte status();
         void simpleConfig();
